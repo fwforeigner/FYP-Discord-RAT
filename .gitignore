@@ -2,4 +2,4 @@
 main.spec
 pyinstaller result
 build
-realmain.py
+/realmain.py
