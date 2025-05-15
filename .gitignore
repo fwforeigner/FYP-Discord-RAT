@@ -1,2 +1,5 @@
 .env
 .idea/
+main.spec
+pyinstaller result
+build
