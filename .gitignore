@@ -8,3 +8,5 @@ certificate.pfx
 signing commands.txt
 website bs
 msi bs
+output
+.gitignore
