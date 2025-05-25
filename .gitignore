@@ -3,3 +3,8 @@ main.spec
 pyinstaller result
 build
 realmain.py
+index.html
+certificate.pfx
+signing commands.txt
+website bs
+msi bs
